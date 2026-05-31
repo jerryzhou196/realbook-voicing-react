@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { VOICING_OPTIONS } from '../../constants/music';
 import { glyphName, writtenNote } from '../../lib/musicTheory';
 import { GrandStaff } from '../score/GrandStaff';
@@ -15,6 +16,11 @@ function Stamp({ index, total }) {
 export function PracticePage({ title, changes, session, voicing, spelling, labels, bpm, inversions, inversionMode }) {
   const voicingLabel = VOICING_OPTIONS.find(option => option.id === voicing)?.label;
   const showInversion = inversions?.length > 1;
+  const activeChipRef = useRef(null);
+  useEffect(() => {
+    activeChipRef.current?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+  }, [session.index]);
+
   return <section className="relative min-h-[76vh] overflow-hidden rounded-[10px_18px_14px_10px] bg-paper px-4 py-5 shadow-[inset_0_0_72px_rgba(87,54,25,.17),5px_7px_0_#baa77d,14px_20px_28px_rgba(0,0,0,.38)] sm:px-7">
     <div className="paper-grain pointer-events-none absolute inset-0 opacity-[.17] mix-blend-multiply" />
     <div className="relative z-10">
@@ -29,7 +35,19 @@ export function PracticePage({ title, changes, session, voicing, spelling, label
           {showInversion && <span className="text-base opacity-60">{inversionName(session.inversionNumber)}</span>}
         </div>
       </div>
-      <div className="h-[min(52vh,590px)] min-h-[395px]"><GrandStaff chord={session.chord} notes={session.notes} spelling={spelling} bpm={bpm} labels={labels} /></div>
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
+        {changes.map((symbol, i) => (
+          <button
+            key={`${symbol}-${i}`}
+            ref={i === session.index ? activeChipRef : null}
+            onClick={() => session.goTo(i)}
+            className={`whitespace-nowrap rounded-full border px-2.5 py-1.5 text-xs transition ${i === session.index ? 'border-leather bg-leather text-parchment' : 'border-[#b09a6050] text-[#7a5c3e] hover:border-[#7a5028]'}`}
+          >
+            {glyphName(symbol)}
+          </button>
+        ))}
+      </div>
+      <div className="mt-3 h-[min(52vh,590px)] min-h-[395px]"><GrandStaff chord={session.chord} notes={session.notes} spelling={spelling} bpm={bpm} labels={labels} /></div>
       <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
         <div><p className={`font-display text-3xl ${session.correct ? 'text-[#406038]' : ''}`}>{session.correct ? '✓ ' : ''}{session.feedback}</p><p className="mt-1 text-[11px] tracking-[.1em] opacity-70">TARGET NOTES &nbsp; {session.notes.map(note => writtenNote(note, session.chord, spelling).label).join(' · ')}</p></div>
         <div className="flex gap-2"><button onClick={session.previous} className="rounded-md border border-[#6f5940] bg-[#e8d8ad] px-4 py-2.5 text-xs">← PREV</button><button onClick={session.next} className="rounded-md border border-leather bg-leather px-4 py-2.5 text-xs text-[#f2e5c3]">NEXT →</button></div>

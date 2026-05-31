@@ -15,7 +15,7 @@ export function SettingsConsole({ progression, session, voicingConfig, midi, bac
     <header className="mb-3 border-b border-[#e7d2a72e] px-2 pb-3"><h2 className="text-xl tracking-[.06em]">SESSION SETUP</h2><p className="text-[10px] tracking-[.2em] opacity-60">REAL BOOK PRACTICE CONSOLE</p></header>
     <nav className="mb-3 grid max-w-[660px] grid-cols-4 gap-2 px-1">{MODES.map(mode => <button key={mode.id} onClick={() => progression.setMode(mode.id)} className={`rounded-md border px-3 py-2.5 text-xs ${progression.mode === mode.id ? 'border-parchment bg-parchment text-[#30251b]' : 'border-[#654f3c] bg-[#291f18] text-[#d4bd93]'}`}>{mode.label}</button>)}</nav>
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-      <ChangesPanel progression={progression} session={session} />
+      <ChangesPanel progression={progression} />
       <VoicingPanel {...voicingConfig} />
       <MidiPanel midi={midi} {...validationConfig} />
       <RhythmPanel backing={backing} />
