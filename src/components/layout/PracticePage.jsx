@@ -35,13 +35,13 @@ export function PracticePage({ title, changes, session, voicing, spelling, label
           {showInversion && <span className="text-base opacity-60">{inversionName(session.inversionNumber)}</span>}
         </div>
       </div>
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
+      <div className="flex justify-center gap-2 overflow-x-auto pb-1">
         {changes.map((symbol, i) => (
           <button
             key={`${symbol}-${i}`}
             ref={i === session.index ? activeChipRef : null}
             onClick={() => session.goTo(i)}
-            className={`whitespace-nowrap rounded-full border px-2.5 py-1.5 text-xs transition ${i === session.index ? 'border-leather bg-leather text-parchment' : 'border-[#b09a6050] text-[#7a5c3e] hover:border-[#7a5028]'}`}
+            className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm transition ${i === session.index ? 'border-leather bg-leather text-parchment' : 'border-[#b09a6050] text-[#7a5c3e] hover:border-[#7a5028]'}`}
           >
             {glyphName(symbol)}
           </button>
