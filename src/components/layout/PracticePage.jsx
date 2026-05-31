@@ -52,11 +52,11 @@ export function PracticePage({ title, changes, session, voicing, spelling, label
         <div className="mb-2 flex justify-between text-[10px] uppercase tracking-[.16em] opacity-65"><span>Keyboard monitor</span><span>gold = target · green = played</span></div>
         <PianoKeyboard held={session.heldNotes} target={session.targetNotes} />
       </div>
+      <p className="mt-4 border-t border-dashed border-[#2c211459] pt-3 text-[11px] leading-relaxed opacity-75">The staff separates chord tones in ascending order for readability; play them simultaneously to pass. Exact Voicing checks the displayed register and pitch set. Chord Tones accepts inversions and doubled notes containing all requested colours.</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
         <div><p className={`font-display text-3xl ${session.correct ? 'text-[#406038]' : ''}`}>{session.correct ? '✓ ' : ''}{session.feedback}</p><p className="mt-1 text-[11px] tracking-[.1em] opacity-70">TARGET NOTES &nbsp; {session.notes.map(note => writtenNote(note, session.chord, spelling).label).join(' · ')}</p></div>
         <div className="flex gap-2"><button onClick={session.previous} className="rounded-md border border-[#6f5940] bg-[#e8d8ad] px-4 py-2.5 text-xs">← PREV</button><button onClick={session.next} className="rounded-md border border-leather bg-leather px-4 py-2.5 text-xs text-[#f2e5c3]">NEXT →</button></div>
       </div>
-      <p className="mt-4 border-t border-dashed border-[#2c211459] pt-3 text-[11px] leading-relaxed opacity-75">The staff separates chord tones in ascending order for readability; play them simultaneously to pass. Exact Voicing checks the displayed register and pitch set. Chord Tones accepts inversions and doubled notes containing all requested colours.</p>
     </div>
   </section>;
 }
