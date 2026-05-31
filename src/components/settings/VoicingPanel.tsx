@@ -3,29 +3,33 @@ import { VOICING_OPTIONS } from '../../constants/music';
 import { Field, Select, TextInput } from '../ui/Field';
 import { Panel } from '../ui/Panel';
 import { Toggle } from '../ui/Toggle';
+import type { InversionMode, SpellingPreference, VoicingId } from '../../types';
 
 const INV_LABELS = ['Root', '1st', '2nd', '3rd', '4th', '5th'];
 
-function InversionDndList({ inversions, setInversions, noteCount }) {
-  const [dropTarget, setDropTarget] = useState(null);
-  const dragFrom = useRef(null);
+interface InversionDndListProps {
+  inversions: number[];
+  setInversions: (v: number[]) => void;
+  noteCount: number;
+}
+function InversionDndList({ inversions, setInversions, noteCount }: InversionDndListProps) {
+  const [dropTarget, setDropTarget] = useState<number | null>(null);
+  const dragFrom = useRef<number | null>(null);
 
   const count = Math.max(noteCount, 1);
   const selectedSet = new Set(inversions);
   const available = Array.from({ length: count }, (_, i) => i).filter(i => !selectedSet.has(i));
 
-  function onDragStart(e, listIndex) {
+  function onDragStart(e: React.DragEvent, listIndex: number) {
     dragFrom.current = listIndex;
     e.dataTransfer.effectAllowed = 'move';
   }
-
-  function onDragOver(e, listIndex) {
+  function onDragOver(e: React.DragEvent, listIndex: number) {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     setDropTarget(listIndex);
   }
-
-  function onDrop(e, listIndex) {
+  function onDrop(e: React.DragEvent, listIndex: number) {
     e.preventDefault();
     const from = dragFrom.current;
     if (from !== null && from !== listIndex) {
@@ -37,7 +41,6 @@ function InversionDndList({ inversions, setInversions, noteCount }) {
     dragFrom.current = null;
     setDropTarget(null);
   }
-
   function onDragEnd() {
     dragFrom.current = null;
     setDropTarget(null);
@@ -45,12 +48,10 @@ function InversionDndList({ inversions, setInversions, noteCount }) {
 
   return (
     <div className="space-y-1.5">
-      {/* Ordered drop zone */}
       <div
         className="flex min-h-[38px] flex-wrap gap-1.5 rounded-md border border-[#6b543f40] p-1.5"
         onDragOver={e => e.preventDefault()}
         onDrop={e => {
-          // Drop on empty area appends to end
           if (dragFrom.current !== null) {
             const from = dragFrom.current;
             const next = [...inversions];
@@ -97,8 +98,6 @@ function InversionDndList({ inversions, setInversions, noteCount }) {
           ))
         )}
       </div>
-
-      {/* Available (unselected) */}
       {available.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {available.map(inv => (
@@ -117,16 +116,52 @@ function InversionDndList({ inversions, setInversions, noteCount }) {
   );
 }
 
-export function VoicingPanel({ voicing, setVoicing, spelling, setSpelling, customFormula, setCustomFormula, labels, setLabels, inversions, setInversions, inversionMode, setInversionMode, noteCount }) {
-  return <Panel title="Voicing Recipe">
-    <Field label="Voicing"><Select value={voicing} onChange={e => setVoicing(e.target.value)}>{VOICING_OPTIONS.map(o => <option value={o.id} key={o.id}>{o.label}</option>)}</Select></Field>
-    <Field label="Sharps / flats"><Select value={spelling} onChange={e => setSpelling(e.target.value)}><option value="auto">Auto by root</option><option value="flats">Prefer flats (♭)</option><option value="sharps">Prefer sharps (♯)</option></Select></Field>
-    {voicing === 'custom' && <Field label="Intervals"><TextInput value={customFormula} onChange={e => setCustomFormula(e.target.value)} placeholder="1, 5, 13, 7, 3" /></Field>}
-    <div className="mb-3">
-      <p className="mb-1.5 text-[10px] uppercase tracking-[0.16em] text-[#cab38b]">Inversions</p>
-      <InversionDndList inversions={inversions} setInversions={setInversions} noteCount={noteCount} />
-    </div>
-    {inversions.length > 1 && <Toggle label="Spread across changes" checked={inversionMode === 'across'} onChange={checked => setInversionMode(checked ? 'across' : 'per-chord')} />}
-    <Toggle label="Label every written note" checked={labels} onChange={setLabels} />
-  </Panel>;
+interface VoicingConfig {
+  voicing: VoicingId;
+  setVoicing: (v: VoicingId) => void;
+  spelling: SpellingPreference;
+  setSpelling: (s: SpellingPreference) => void;
+  customFormula: string;
+  setCustomFormula: (f: string) => void;
+  labels: boolean;
+  setLabels: (v: boolean) => void;
+  inversions: number[];
+  setInversions: (v: number[]) => void;
+  inversionMode: InversionMode;
+  setInversionMode: (m: InversionMode) => void;
+  noteCount: number;
+}
+export function VoicingPanel({
+  voicing, setVoicing, spelling, setSpelling, customFormula, setCustomFormula,
+  labels, setLabels, inversions, setInversions, inversionMode, setInversionMode, noteCount,
+}: VoicingConfig) {
+  return (
+    <Panel title="Voicing Recipe">
+      <Field label="Voicing">
+        <Select value={voicing} onChange={e => setVoicing(e.target.value as VoicingId)}>
+          {VOICING_OPTIONS.map(o => <option value={o.id} key={o.id}>{o.label}</option>)}
+        </Select>
+      </Field>
+      <Field label="Sharps / flats">
+        <Select value={spelling} onChange={e => setSpelling(e.target.value as SpellingPreference)}>
+          <option value="auto">Auto by root</option>
+          <option value="flats">Prefer flats (♭)</option>
+          <option value="sharps">Prefer sharps (♯)</option>
+        </Select>
+      </Field>
+      {voicing === 'custom' && (
+        <Field label="Intervals">
+          <TextInput value={customFormula} onChange={e => setCustomFormula(e.target.value)} placeholder="1, 5, 13, 7, 3" />
+        </Field>
+      )}
+      <div className="mb-3">
+        <p className="mb-1.5 text-[10px] uppercase tracking-[0.16em] text-[#cab38b]">Inversions</p>
+        <InversionDndList inversions={inversions} setInversions={setInversions} noteCount={noteCount} />
+      </div>
+      {inversions.length > 1 && (
+        <Toggle label="Spread across changes" checked={inversionMode === 'across'} onChange={checked => setInversionMode(checked ? 'across' : 'per-chord')} />
+      )}
+      <Toggle label="Label every written note" checked={labels} onChange={setLabels} />
+    </Panel>
+  );
 }
