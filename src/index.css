@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Libre+Baskerville:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply min-h-screen font-book text-ink antialiased;
+    margin: 0;
+    background: radial-gradient(circle at 12% 10%, #766754, #413329 39%, #211a15 100%);
+  }
+
+  button {
+    @apply transition-colors;
+  }
+}
+
+@layer utilities {
+  .paper-grain {
+    background-image:
+      radial-gradient(#684a30 .7px, transparent .7px),
+      radial-gradient(#806545 .75px, transparent .75px);
+    background-position: 0 0, 9px 15px;
+    background-size: 20px 24px, 31px 27px;
+  }
+}
