@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PracticePage } from './components/layout/PracticePage';
 import { SettingsConsole } from './components/settings/SettingsConsole';
 import { glyphName } from './lib/musicTheory';
@@ -7,15 +7,25 @@ import { useMidiInput } from './hooks/useMidiInput';
 import { usePracticeSession } from './hooks/usePracticeSession';
 import { useProgression } from './hooks/useProgression';
 
+function loadStored(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw !== null ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export default function App() {
   const progression = useProgression();
   const [voicing, setVoicing] = useState('ascending');
   const [customFormula, setCustomFormula] = useState('1, 5, 13, 7, 3');
   const [labels, setLabels] = useState(true);
-  const [inversions, setInversions] = useState([0]);
-  const [inversionMode, setInversionMode] = useState('per-chord');
+  const [inversions, setInversions] = useState(() => loadStored('realbook-inversions', [0]));
+  const [inversionMode, setInversionMode] = useState(() => loadStored('realbook-inversion-mode', 'per-chord'));
   const [validation, setValidation] = useState('exact');
   const [autoAdvance, setAutoAdvance] = useState(true);
+
   const session = usePracticeSession({
     changes: progression.changes,
     spelling: progression.spelling,
@@ -26,6 +36,20 @@ export default function App() {
     inversions,
     inversionMode,
   });
+
+  const noteCount = session.notes.length || 5;
+
+  // Trim out-of-range inversions when the voicing switches to fewer notes
+  useEffect(() => {
+    setInversions(prev => {
+      const valid = prev.filter(i => i < noteCount);
+      return valid.length ? valid : [0];
+    });
+  }, [noteCount]);
+
+  useEffect(() => { localStorage.setItem('realbook-inversions', JSON.stringify(inversions)); }, [inversions]);
+  useEffect(() => { localStorage.setItem('realbook-inversion-mode', inversionMode); }, [inversionMode]);
+
   const midi = useMidiInput({ onNoteOn: session.noteOn, onNoteOff: session.noteOff });
   const backing = useBackingTrack({ chord: session.chord, onMessage: session.notify });
   const title = useMemo(() => {
@@ -53,7 +77,7 @@ export default function App() {
         session={session}
         midi={midi}
         backing={backing}
-        voicingConfig={{ voicing, setVoicing, spelling: progression.spelling, setSpelling: progression.setSpelling, customFormula, setCustomFormula, labels, setLabels, inversions, setInversions, inversionMode, setInversionMode }}
+        voicingConfig={{ voicing, setVoicing, spelling: progression.spelling, setSpelling: progression.setSpelling, customFormula, setCustomFormula, labels, setLabels, inversions, setInversions, inversionMode, setInversionMode, noteCount }}
         validationConfig={{ validation, setValidation, autoAdvance, setAutoAdvance }}
       />
     </div>
