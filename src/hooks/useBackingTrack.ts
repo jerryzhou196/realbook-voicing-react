@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, RefObject } from 'react';
 import { rootAt } from '../lib/musicTheory';
+import { usePersistentState } from './usePersistentState';
 import type { Chord } from '../types';
 
 export interface BackingTrackState {
@@ -25,9 +26,9 @@ export function useBackingTrack({
   onMessage: (msg: string) => void;
 }): BackingTrackState {
   const [drumsEnabled, setDrumsEnabled] = useState(false);
-  const [bassEnabled, setBassEnabled] = useState(true);
+  const [bassEnabled, setBassEnabled] = usePersistentState('realbook-bass-enabled', true);
   const [playing, setPlaying] = useState(false);
-  const [bpm, setBpm] = useState(76);
+  const [bpm, setBpm] = usePersistentState('realbook-bpm', 76);
   const [fileName, setFileName] = useState('No drum loop loaded');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef('');

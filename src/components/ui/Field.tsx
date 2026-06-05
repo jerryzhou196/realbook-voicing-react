@@ -1,4 +1,4 @@
-import type { ReactNode, SelectHTMLAttributes, InputHTMLAttributes } from 'react';
+import type { ReactNode, SelectHTMLAttributes, InputHTMLAttributes, TextareaHTMLAttributes } from 'react';
 
 interface FieldProps {
   label: string;
@@ -19,6 +19,16 @@ export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
     <input
       {...props}
       className="w-full rounded-md border border-[#6b543f] bg-[#efe1c1] px-3 py-2.5 font-book text-sm normal-case tracking-normal text-[#2d241a] outline-none focus:border-[#d4b674]"
+    />
+  );
+}
+
+export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <textarea
+      rows={4}
+      {...props}
+      className="w-full resize-y rounded-md border border-[#6b543f] bg-[#efe1c1] px-3 py-2.5 font-book text-sm normal-case leading-relaxed tracking-normal text-[#2d241a] outline-none focus:border-[#d4b674]"
     />
   );
 }

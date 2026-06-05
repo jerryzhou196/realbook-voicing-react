@@ -1,6 +1,6 @@
 import { KEY_OPTIONS, STANDARDS } from '../../constants/music';
 import { glyphName } from '../../lib/musicTheory';
-import { Field, Select, TextInput } from '../ui/Field';
+import { Field, Select, TextInput, TextArea } from '../ui/Field';
 import { Panel } from '../ui/Panel';
 import type { ProgressionState } from '../../hooks/useProgression';
 
@@ -37,11 +37,32 @@ export function ChangesPanel({ progression }: ChangesPanelProps) {
             </Field>
             <Field label="Chord quality">
               <Select value={progression.fifthsQuality} onChange={e => progression.setFifthsQuality(e.target.value)}>
-                <option value="maj7">Major 7</option>
-                <option value="7">Dominant 7</option>
-                <option value="m7">Minor 7</option>
-                <option value="m7b5">Minor 7 flat 5</option>
-                <option value="mMaj7">Minor major 7</option>
+                <optgroup label="Major">
+                  <option value="maj7">Major 7</option>
+                  <option value="maj9">Major 9</option>
+                  <option value="6">Major 6</option>
+                </optgroup>
+                <optgroup label="Dominant">
+                  <option value="7">Dominant 7</option>
+                  <option value="9">Dominant 9</option>
+                  <option value="13">Dominant 13</option>
+                  <option value="7sus4">Dominant 7 sus 4</option>
+                  <option value="7alt">Dominant 7 altered</option>
+                </optgroup>
+                <optgroup label="Minor">
+                  <option value="m7">Minor 7</option>
+                  <option value="m9">Minor 9</option>
+                  <option value="m6">Minor 6</option>
+                  <option value="mMaj7">Minor major 7</option>
+                </optgroup>
+                <optgroup label="Diminished / Half-diminished">
+                  <option value="m7b5">Minor 7 flat 5</option>
+                  <option value="dim7">Diminished 7</option>
+                </optgroup>
+                <optgroup label="Augmented">
+                  <option value="aug7">Augmented 7</option>
+                  <option value="augMaj7">Augmented major 7</option>
+                </optgroup>
               </Select>
             </Field>
           </div>
@@ -73,8 +94,8 @@ export function ChangesPanel({ progression }: ChangesPanelProps) {
         </>
       )}
       {progression.mode === 'custom' && (
-        <Field label="Comma-separated changes">
-          <TextInput value={progression.customText} onChange={e => progression.setCustomText(e.target.value)} placeholder="CM7, Am7b5, D7alt, GmMaj7" />
+        <Field label="Changes (commas or new lines)">
+          <TextArea value={progression.customText} onChange={e => progression.setCustomText(e.target.value)} placeholder={'CM7, Am7b5, D7alt, GmMaj7\nor one chord per line'} />
         </Field>
       )}
     </Panel>

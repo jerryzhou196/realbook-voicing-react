@@ -39,7 +39,8 @@ export function parseChord(text: string): Chord | null {
   (
     [
       ['major minor', 'mMaj'], ['minor major', 'mMaj'], ['half-diminished', 'm7b5'],
-      ['half diminished', 'm7b5'], ['diminished', 'dim'], ['major', 'maj'],
+      ['half diminished', 'm7b5'], ['diminished', 'dim'], ['augmented', 'aug'],
+      ['sustained', 'sus'], ['major', 'maj'],
       ['minor', 'm'], ['flat', 'b'], ['sharp', '#'],
     ] as [string, string][]
   ).forEach(([find, replacement]) => {
@@ -69,20 +70,30 @@ export function parseChord(text: string): Chord | null {
   return { root, pitchClass: PITCH_CLASS[root], suffix, symbol: root + suffix };
 }
 
-type ChordQuality = 'major' | 'minor' | 'dominant' | 'minor-major' | 'half-diminished' | 'diminished';
+type ChordQuality = 'major' | 'minor' | 'dominant' | 'minor-major' | 'half-diminished' | 'diminished' | 'augmented';
 
 function chordQuality(chord: Chord): ChordQuality {
   const suffix = (chord?.suffix || '').toLowerCase();
   if (suffix.includes('mmaj')) return 'minor-major';
   if (suffix.includes('m7b5')) return 'half-diminished';
   if (suffix.includes('dim') || suffix.includes('°')) return 'diminished';
+  if (suffix.includes('aug') || suffix.includes('+') || suffix.includes('#5')) return 'augmented';
   if (suffix.startsWith('m') && !suffix.startsWith('maj')) return 'minor';
   if (suffix.includes('maj')) return 'major';
   if (['7', '9', '11', '13', 'alt'].some(ext => suffix.includes(ext))) return 'dominant';
   return 'major';
 }
 
+function isSus2(chord: Chord): boolean {
+  return /sus\s*2/i.test(chord?.suffix || '');
+}
+function isSus(chord: Chord): boolean {
+  return /sus/i.test(chord?.suffix || '');
+}
+
 function third(chord: Chord): string {
+  if (isSus2(chord)) return '2';
+  if (isSus(chord)) return '4';
   return ['minor', 'minor-major', 'half-diminished', 'diminished'].includes(chordQuality(chord)) ? 'b3' : '3';
 }
 
@@ -93,7 +104,9 @@ function isSixthChord(chord: Chord): boolean {
 function seventh(chord: Chord): string {
   if (isSixthChord(chord)) return '6';
   const quality = chordQuality(chord);
+  const suffix = (chord?.suffix || '').toLowerCase();
   if (quality === 'major' || quality === 'minor-major') return '7';
+  if (quality === 'augmented' && suffix.includes('maj')) return '7';
   if (quality === 'diminished') return 'bb7';
   return 'b7';
 }
@@ -101,6 +114,7 @@ function seventh(chord: Chord): string {
 function basicFormula(chord: Chord): string[] {
   const quality = chordQuality(chord);
   const suffix = chord?.suffix || '';
+  const lowerSuffix = suffix.toLowerCase();
   const minorLike = ['minor', 'minor-major', 'half-diminished', 'diminished'].includes(quality);
   let degrees: string[];
   if (isSixthChord(chord)) {
@@ -110,10 +124,13 @@ function basicFormula(chord: Chord): string[] {
       : quality === 'half-diminished' ? ['1', 'b3', 'b5', 'b7']
         : quality === 'diminished' ? ['1', 'b3', 'b5', 'bb7']
           : quality === 'minor' ? ['1', 'b3', '5', 'b7']
-            : quality === 'dominant' ? ['1', '3', '5', 'b7']
-              : ['1', '3', '5', '7'];
+            : quality === 'augmented' ? ['1', '3', '#5', lowerSuffix.includes('maj') ? '7' : 'b7']
+              : quality === 'dominant' ? ['1', '3', '5', 'b7']
+                : ['1', '3', '5', '7'];
   }
-  if (suffix.toLowerCase().includes('alt')) degrees = [...degrees, 'b9', '#11', 'b13'];
+  if (isSus2(chord)) degrees = degrees.map(d => (d === '3' || d === 'b3') ? '2' : d);
+  else if (isSus(chord)) degrees = degrees.map(d => (d === '3' || d === 'b3') ? '4' : d);
+  if (lowerSuffix.includes('alt')) degrees = [...degrees, 'b9', '#11', 'b13'];
   else {
     if (suffix.includes('b9')) degrees.push('b9');
     else if (suffix.includes('#9')) degrees.push('#9');
@@ -143,6 +160,9 @@ export function voicingRecipe(chord: Chord, voicingId: VoicingId, customFormula:
   }
 }
 
+const MAX_MIDI = 84; // C6 — keep voicings within the visible staff range
+const MIN_MIDI = 36; // C2 — bass-staff floor for octave-dropped notes
+
 export function voicedNotes(chord: Chord, voicingId: VoicingId, customFormula: string, inversion = 0): Note[] {
   if (!chord) return [];
   const degrees = voicingRecipe(chord, voicingId, customFormula);
@@ -152,10 +172,16 @@ export function voicedNotes(chord: Chord, voicingId: VoicingId, customFormula: s
   const root = rootAt(chord.pitchClass, lowerRoot);
   const leftHandCount = voicingId === 'ascending' ? Math.min(2, degrees.length) : Math.max(2, Math.ceil(degrees.length / 2));
   let previous = root + 11;
+  const placed: number[] = [];
   return rotatedDegrees.map((degree, index): Note => {
     let midi = root + INTERVALS[degree] + 12;
     while (midi <= previous) midi += 12;
-    previous = midi;
+    if (midi > MAX_MIDI) {
+      while (midi > MAX_MIDI) midi -= 12;
+      while ((placed.includes(midi) || midi < MIN_MIDI) && midi + 12 <= MAX_MIDI) midi += 12;
+    }
+    placed.push(midi);
+    previous = Math.max(previous, midi);
     return { midi, degree, hand: index < leftHandCount ? 'LH' : 'RH' };
   });
 }
@@ -202,7 +228,7 @@ export function staffStep(note: Note, chord: Chord, preference: SpellingPreferen
 }
 
 export function parseChordList(text: string): string[] {
-  return text.split(',').map(parseChord).filter((c): c is Chord => c !== null).map(c => c.symbol);
+  return text.split(/[,\n]/).map(parseChord).filter((c): c is Chord => c !== null).map(c => c.symbol);
 }
 
 export function createHarmonyProgression(

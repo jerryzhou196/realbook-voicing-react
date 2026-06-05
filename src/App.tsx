@@ -1,31 +1,23 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { PracticePage } from './components/layout/PracticePage';
 import { SettingsConsole } from './components/settings/SettingsConsole';
 import { glyphName } from './lib/musicTheory';
 import { useBackingTrack } from './hooks/useBackingTrack';
 import { useMidiInput } from './hooks/useMidiInput';
+import { usePersistentState } from './hooks/usePersistentState';
 import { usePracticeSession } from './hooks/usePracticeSession';
 import { useProgression } from './hooks/useProgression';
 import type { InversionMode, VoicingId } from './types';
 
-function loadStored<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw !== null ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 export default function App() {
   const progression = useProgression();
-  const [voicing, setVoicing] = useState<VoicingId>('ascending');
-  const [customFormula, setCustomFormula] = useState('1, 5, 13, 7, 3');
-  const [labels, setLabels] = useState(true);
-  const [inversions, setInversions] = useState<number[]>(() => loadStored('realbook-inversions', [0]));
-  const [inversionMode, setInversionMode] = useState<InversionMode>(() => loadStored('realbook-inversion-mode', 'per-chord'));
-  const [validation, setValidation] = useState<'exact' | 'tones'>('exact');
-  const [autoAdvance, setAutoAdvance] = useState(true);
+  const [voicing, setVoicing] = usePersistentState<VoicingId>('realbook-voicing', 'ascending');
+  const [customFormula, setCustomFormula] = usePersistentState('realbook-custom-formula', '1, 5, 13, 7, 3');
+  const [labels, setLabels] = usePersistentState('realbook-labels', true);
+  const [inversions, setInversions] = usePersistentState<number[]>('realbook-inversions', [0]);
+  const [inversionMode, setInversionMode] = usePersistentState<InversionMode>('realbook-inversion-mode', 'per-chord');
+  const [validation, setValidation] = usePersistentState<'exact' | 'tones'>('realbook-validation', 'exact');
+  const [autoAdvance, setAutoAdvance] = usePersistentState('realbook-auto-advance', true);
 
   const session = usePracticeSession({
     changes: progression.changes,
@@ -46,9 +38,6 @@ export default function App() {
       return valid.length ? valid : [0];
     });
   }, [noteCount]);
-
-  useEffect(() => { localStorage.setItem('realbook-inversions', JSON.stringify(inversions)); }, [inversions]);
-  useEffect(() => { localStorage.setItem('realbook-inversion-mode', inversionMode); }, [inversionMode]);
 
   const midi = useMidiInput({ onNoteOn: session.noteOn, onNoteOff: session.noteOff });
   const backing = useBackingTrack({ chord: session.chord, onMessage: session.notify });

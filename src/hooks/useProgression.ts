@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { STANDARDS } from '../constants/music';
 import { createFifthsProgression, createHarmonyProgression, parseChordList } from '../lib/musicTheory';
 import { fetchChordChart } from '../services/chartApi';
+import { usePersistentState } from './usePersistentState';
 import type { Difficulty, FifthsDirection, ProgressionMode, SpellingPreference } from '../types';
 
 export interface ProgressionState {
@@ -32,17 +33,17 @@ export interface ProgressionState {
 }
 
 export function useProgression(): ProgressionState {
-  const [mode, setMode] = useState<ProgressionMode>('harmony');
-  const [keyName, setKeyName] = useState('C');
-  const [difficulty, setDifficulty] = useState<Difficulty>('Easy');
-  const [fifthsQuality, setFifthsQuality] = useState('maj7');
-  const [fifthsDirection, setFifthsDirection] = useState<FifthsDirection>('resolving');
-  const [spelling, setSpelling] = useState<SpellingPreference>('auto');
-  const [customText, setCustomText] = useState('Dm7, G7, Cmaj7, A7alt');
-  const [standard, setStandard] = useState(Object.keys(STANDARDS)[0]);
+  const [mode, setMode] = usePersistentState<ProgressionMode>('realbook-mode', 'harmony');
+  const [keyName, setKeyName] = usePersistentState('realbook-key', 'C');
+  const [difficulty, setDifficulty] = usePersistentState<Difficulty>('realbook-difficulty', 'Easy');
+  const [fifthsQuality, setFifthsQuality] = usePersistentState('realbook-fifths-quality', 'maj7');
+  const [fifthsDirection, setFifthsDirection] = usePersistentState<FifthsDirection>('realbook-fifths-direction', 'resolving');
+  const [spelling, setSpelling] = usePersistentState<SpellingPreference>('realbook-spelling', 'auto');
+  const [customText, setCustomText] = usePersistentState('realbook-custom-text', 'Dm7, G7, Cmaj7, A7alt');
+  const [standard, setStandard] = usePersistentState('realbook-standard', Object.keys(STANDARDS)[0]);
   const [remoteChanges, setRemoteChanges] = useState<string[]>([]);
-  const [chartQuery, setChartQuery] = useState('Autumn Leaves');
-  const [endpoint, setEndpoint] = useState('');
+  const [chartQuery, setChartQuery] = usePersistentState('realbook-chart-query', 'Autumn Leaves');
+  const [endpoint, setEndpoint] = usePersistentState('realbook-endpoint', '');
   const [apiStatus, setApiStatus] = useState('Local charts ready; optionally connect a JSON chart source.');
 
   const changes = useMemo(() => {

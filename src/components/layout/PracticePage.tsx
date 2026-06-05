@@ -59,7 +59,7 @@ export function PracticePage({ title, changes, session, voicing, spelling, label
             {showInversion && <span className="text-base opacity-60">{inversionName(session.inversionNumber)}</span>}
           </div>
         </div>
-        <div className="flex justify-center gap-2 overflow-x-auto pb-1">
+        <div className="flex flex-wrap justify-center gap-2 pb-1">
           {changes.map((symbol, i) => (
             <button
               key={`${symbol}-${i}`}
